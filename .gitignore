@@ -31,7 +31,7 @@
 *.out
 *.app
 *.csv
-#data/
+data/
 *.wkt
 *.tr
 build/
@@ -53,3 +53,4 @@ store
 right_store
 .vs
 old_what
+

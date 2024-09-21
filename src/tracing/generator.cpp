@@ -367,7 +367,7 @@ void *gentrace_unit(void *arg){
     query_context *ctx = (query_context *)arg;
     trace_generator *gen = (trace_generator *)ctx->target[0];
     Point *result = (Point *)ctx->target[1];
-    Map *mymap = gen->map->clone();
+    Map *mymap = gen->map->clone();     //
     while(true){
         // pick one object for generating
         size_t start = 0;
@@ -403,4 +403,5 @@ void trace_generator::generate_trace(Point * traces){
         pthread_join(threads[i], &status);
     }
     logt("generate traces",start);
+
 }

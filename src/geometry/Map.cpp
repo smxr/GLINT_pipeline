@@ -120,80 +120,80 @@ box *Map::getMBR(){
  * compare each street pair to see if they connect with each other
  * */
 void Map::connect_segments(vector<vector<Street *>> connection) {
-    log("connecting streets");
-    struct timeval start = get_cur_time();
-
-    int total = 0;
-    for(vector<Street *> &connects:connection){
-        for(int i=0;i<connects.size()-1;i++){
-            for(int j=i+1;j<connects.size();j++){
-                connects[i]->connected.push_back(connects[j]);
-                connects[j]->connected.push_back(connects[i]);
-                total += 2;
-            }
-        }
-    }
-
-    logt("touched %d streets %f",start,streets.size(),total*1.0/streets.size());
-
-    // get the maximum connected component graph
-    int *checked = new int[streets.size()];
-    for(int i=0;i<streets.size();i++) {
-        checked[i] = 0;
-    }
-
-    vector<Street *> cur_max_graph;
-    int connected = 0;
-    int cur_list = 0;
-    while(connected<streets.size()){
-        queue<Street *> q;
-        Street *seed = NULL;
-        vector<Street *> tmp;
-        for(int i=0;i<streets.size();i++) {
-            if(!checked[i]){
-                seed = streets[i];
-            }
-        }
-        q.push(seed);
-        while(!q.empty()) {
-            Street *cur = q.front();
-            q.pop();
-            if(checked[cur->id]==1){
-                continue;
-            }
-            tmp.push_back(cur);
-            checked[cur->id] = 1;
-            connected++;
-            for(Street *sc:cur->connected) {
-                if(!checked[sc->id]) {
-                    q.push(sc);
-                }
-            }
-        }
-        if(cur_max_graph.size()<tmp.size()){
-            cur_max_graph.clear();
-            cur_max_graph.insert(cur_max_graph.begin(), tmp.begin(), tmp.end());
-        }
-        tmp.clear();
-    }
-
-    // update the street list with only the connected streets
-    unordered_set<Street *> included;
-    for(Street *st:cur_max_graph){
-        included.insert(st);
-    }
-    for(Street *st:streets){
-        if(included.find(st)==included.end()){
-            delete st;
-        }
-    }
-    streets.clear();
-    streets.insert(streets.end(), cur_max_graph.begin(), cur_max_graph.end());
-    for(unsigned int i=0;i<streets.size();i++){
-        streets[i]->id = i;
-    }
-    delete checked;
-    logt("connected %d streets",start,streets.size());
+//    log("connecting streets");
+//    struct timeval start = get_cur_time();
+//
+//    int total = 0;
+//    for(vector<Street *> &connects:connection){
+//        for(int i=0;i<connects.size()-1;i++){
+//            for(int j=i+1;j<connects.size();j++){
+//                connects[i]->connected.push_back(connects[j]);
+//                connects[j]->connected.push_back(connects[i]);
+//                total += 2;
+//            }
+//        }
+//    }
+//
+//    logt("touched %d streets %f",start,streets.size(),total*1.0/streets.size());
+//
+//    // get the maximum connected component graph
+//    int *checked = new int[streets.size()];
+//    for(int i=0;i<streets.size();i++) {
+//        checked[i] = 0;
+//    }
+//
+//    vector<Street *> cur_max_graph;
+//    int connected = 0;
+//    int cur_list = 0;
+//    while(connected<streets.size()){
+//        queue<Street *> q;
+//        Street *seed = NULL;
+//        vector<Street *> tmp;
+//        for(int i=0;i<streets.size();i++) {
+//            if(!checked[i]){
+//                seed = streets[i];
+//            }
+//        }
+//        q.push(seed);
+//        while(!q.empty()) {
+//            Street *cur = q.front();
+//            q.pop();
+//            if(checked[cur->id]==1){
+//                continue;
+//            }
+//            tmp.push_back(cur);
+//            checked[cur->id] = 1;
+//            connected++;
+//            for(Street *sc:cur->connected) {
+//                if(!checked[sc->id]) {
+//                    q.push(sc);
+//                }
+//            }
+//        }
+//        if(cur_max_graph.size()<tmp.size()){
+//            cur_max_graph.clear();
+//            cur_max_graph.insert(cur_max_graph.begin(), tmp.begin(), tmp.end());
+//        }
+//        tmp.clear();
+//    }
+//
+//    // update the street list with only the connected streets
+//    unordered_set<Street *> included;
+//    for(Street *st:cur_max_graph){
+//        included.insert(st);
+//    }
+//    for(Street *st:streets){
+//        if(included.find(st)==included.end()){
+//            delete st;
+//        }
+//    }
+//    streets.clear();
+//    streets.insert(streets.end(), cur_max_graph.begin(), cur_max_graph.end());
+//    for(unsigned int i=0;i<streets.size();i++){
+//        streets[i]->id = i;
+//    }
+//    delete checked;
+//    logt("connected %d streets",start,streets.size());
 }
 
 void Map::dumpTo(const char *path) {
@@ -249,6 +249,7 @@ void Map::loadFrom(const char *path) {
     unsigned int id = 0;
     Node *start = NULL;
     Node *end = NULL;
+    cout << slen << "slen" << endl;
     for(;id<slen;id++){
         in.read((char *)&num, sizeof(num));
         start = nodes[num];
@@ -263,6 +264,7 @@ void Map::loadFrom(const char *path) {
         }
         connected[id] = cons;
         assert(start&&end);
+        assert(id < 100000);
         streets[id] = new Street(id, start, end);
     }
 
@@ -281,77 +283,77 @@ void Map::loadFrom(const char *path) {
 
 
 void Map::loadFromCSV(const char *path){
-
-    std::ifstream file(path);
-    if(!file.is_open()){
-        log("%s cannot be opened",path);
-        exit(0);
-    }
-    std::string str;
-    vector<string> fields;
-    //skip the head
-    std::getline(file, str);
-    map<string, Node *> nodeset;
-    char cotmp[256];
-    vector<double> values;
-    unsigned int id = 0;
-    Node *start_point = NULL;
-    Node *end_point = NULL;
-    vector<vector<Street *>> connections;
-    while (std::getline(file, str)){
-        // Process str
-        fields.clear();
-        tokenize(str, fields);
-        if(fields.size()<=2){
-            continue;
-        }
-        string geo = fields[1];
-        if(geo.size()<18){
-            continue;
-        }
-        values = parse_double_values(geo);
-        if(values.size()==0){
-            continue;
-        }
-        assert(values.size()%2==0);
-
-        double start[2] = {values[0], values[1]};
-        double end[2] = {values[values.size()-2], values[values.size()-1]};
-
-        sprintf(cotmp, "%.14f_%.14f", values[0], values[1]);
-
-        if(nodeset.find(cotmp)==nodeset.end()){
-            Node *p = new Node(start[0],start[1]);
-            p->id = nodeset.size();
-            nodes.push_back(p);
-            vector<Street *> cs;
-            connections.push_back(cs);
-            nodeset[cotmp] = p;
-        }
-        start_point = nodeset[cotmp];
-        sprintf(cotmp, "%.14f_%.14f", values[values.size()-2], values[values.size()-1]);
-        if(nodeset.find(cotmp)==nodeset.end()){
-            Node *p = new Node(end[0],end[1]);
-            p->id = nodeset.size();
-            nodes.push_back(p);
-            vector<Street *> cs;
-            connections.push_back(cs);
-            nodeset[cotmp] = p;
-        }
-        end_point = nodeset[cotmp];
-        Street *ns = new Street(id++,start_point,end_point);
-        streets.push_back(ns);
-        connections[start_point->id].push_back(ns);
-        connections[end_point->id].push_back(ns);
-    }
-    nodeset.clear();
-    connect_segments(connections);
-    for(vector<Street *> &cs:connections){
-        cs.clear();
-    }
-    connections.clear();
-    log("%ld nodes and %ld streets are loaded",nodes.size(),streets.size());
-    getMBR();
+//
+//    std::ifstream file(path);
+//    if(!file.is_open()){
+//        log("%s cannot be opened",path);
+//        exit(0);
+//    }
+//    std::string str;
+//    vector<string> fields;
+//    //skip the head
+//    std::getline(file, str);
+//    map<string, Node *> nodeset;
+//    char cotmp[256];
+//    vector<double> values;
+//    unsigned int id = 0;
+//    Node *start_point = NULL;
+//    Node *end_point = NULL;
+//    vector<vector<Street *>> connections;
+//    while (std::getline(file, str)){
+//        // Process str
+//        fields.clear();
+//        tokenize(str, fields);
+//        if(fields.size()<=2){
+//            continue;
+//        }
+//        string geo = fields[1];
+//        if(geo.size()<18){
+//            continue;
+//        }
+//        values = parse_double_values(geo);
+//        if(values.size()==0){
+//            continue;
+//        }
+//        assert(values.size()%2==0);
+//
+//        double start[2] = {values[0], values[1]};
+//        double end[2] = {values[values.size()-2], values[values.size()-1]};
+//
+//        sprintf(cotmp, "%.14f_%.14f", values[0], values[1]);
+//
+//        if(nodeset.find(cotmp)==nodeset.end()){
+//            Node *p = new Node(start[0],start[1]);
+//            p->id = nodeset.size();
+//            nodes.push_back(p);
+//            vector<Street *> cs;
+//            connections.push_back(cs);
+//            nodeset[cotmp] = p;
+//        }
+//        start_point = nodeset[cotmp];
+//        sprintf(cotmp, "%.14f_%.14f", values[values.size()-2], values[values.size()-1]);
+//        if(nodeset.find(cotmp)==nodeset.end()){
+//            Node *p = new Node(end[0],end[1]);
+//            p->id = nodeset.size();
+//            nodes.push_back(p);
+//            vector<Street *> cs;
+//            connections.push_back(cs);
+//            nodeset[cotmp] = p;
+//        }
+//        end_point = nodeset[cotmp];
+//        Street *ns = new Street(id++,start_point,end_point);
+//        streets.push_back(ns);
+//        connections[start_point->id].push_back(ns);
+//        connections[end_point->id].push_back(ns);
+//    }
+//    nodeset.clear();
+//    connect_segments(connections);
+//    for(vector<Street *> &cs:connections){
+//        cs.clear();
+//    }
+//    connections.clear();
+//    log("%ld nodes and %ld streets are loaded",nodes.size(),streets.size());
+//    getMBR();
 }
 
 Map *Map::clone(){
@@ -363,6 +365,9 @@ Map *Map::clone(){
     }
     nmap->streets.resize(streets.size());
     for(Street *s:streets){
+//        if(s->id >= streets.size()){
+//            cout << "s->id" << s->id << endl;
+//        }
         Street *ns = new Street(s->id,nmap->nodes[s->start->id],nmap->nodes[s->end->id]);
         nmap->streets[s->id] = ns;
     }

@@ -76,11 +76,10 @@ public:
         return length;
     }
 
-    Street(unsigned int i, Node *s, Node *e) {
+    Street(unsigned int i, Node *s, Node *e) :id(i) {
         assert(s&&e);
         start = s;
         end = e;
-        id = i;
     }
 
     Node *close(Street *seg);
@@ -148,6 +147,15 @@ public:
     Map(string path);
     vector<Street *> getStreets(){
         return streets;
+    }
+
+    void check_Streets(){
+        for(int i = 0; i < streets.size(); i++){
+            if(streets[i]->id != i){       //stres[i]->id >= stres.size()
+                cout << "stres id" << streets[i]->id << " " << i << endl;
+                streets[i]->id = i;
+            }
+        }
     }
 
     ~Map();

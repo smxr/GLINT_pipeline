@@ -709,6 +709,11 @@ void tracer::process(){
             loadData(config->trace_path.c_str(),st);
         }
         else if(!config->load_meetings_pers){
+            if(true){
+                cout << st << endl;
+                generator->map->check_Streets();
+            }
+            cout << "after process" << endl;
             generator->generate_trace(trace);
         }
 		start = get_cur_time();

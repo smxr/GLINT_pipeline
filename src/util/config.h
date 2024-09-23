@@ -50,7 +50,7 @@ public:
     //added
     bool load_data = false;
 
-    uint G_bytes = 1;
+    uint G_bytes = 2;
     uint kv_capacity = 134217728 + 1000000;            //134217728 + 1000000
     uint kv_restriction = 134217728;                  //2*1024*1024*1024/16 = 134217728
     uint MemTable_capacity = 2 ;             //5*2 ,and workbench data[100] is not enough
@@ -77,7 +77,7 @@ public:
     void update(){
         cout << "into update" << endl;
         assert(MemTable_capacity%2==0);
-        kv_restriction = G_bytes * 671088;            //67108864 = 1G
+        kv_restriction = G_bytes * 67108864;            //67108864 = 1G
         kv_capacity = kv_restriction + 1000000;
         oversize_buffer_capacity = kv_restriction / 100;
         split_num = sqrt(CTF_count);

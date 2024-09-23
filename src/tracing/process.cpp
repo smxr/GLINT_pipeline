@@ -654,27 +654,45 @@ void *straight_dump(void *arg){
     uint total_index = 0;
     uint sst_count = 0;
     struct timeval bg_start = get_cur_time();
-    pthread_t threads[bench->config->CTF_count];        //may be larger than config->num_threads
+#pragma omp parallel for num_threads(bench->config->num_threads)
     for(sst_count=0; sst_count<bench->config->CTF_count; sst_count++){
+        ofstream SSTable_of;
         bench->ctbs[old_big].first_widpid[sst_count] = bench->h_keys[offset][total_index] >> (OID_BIT + MBR_BIT + DURATION_BIT + END_BIT);
 //        cout<<bench->bg_run[old_big].first_widpid[sst_count]<<endl;
 //        cout<<get_key_wid(bench->h_keys[offset][total_index])<<endl;
 //        cout<<get_key_pid(bench->h_keys[offset][total_index])<<endl<<endl;
         total_index += bench->h_CTF_capacity[offset][sst_count];
         //assert(total_index<=bench->config->kv_restriction);
-        string keys_path = bench->config->raid_path +to_string(old_big)+"-"+to_string(sst_count);
-        int SIZE = sizeof(__uint128_t)*bench->h_CTF_capacity[offset][sst_count];
-        query_context tctx;
-        tctx.target[0] = (void *)(bench->h_keys[offset] + total_index);
-        tctx.target[1] = (void *)keys_path.c_str();
-        tctx.target[2] = (void *)&SIZE;
-        pthread_create(&threads[sst_count], NULL, parallel_load, (void *)&tctx);
+
+        cout << bench->config->raid_path + to_string(sst_count%8) + "/SSTable_"+to_string(old_big)+"-"+to_string(sst_count) << endl;
+        SSTable_of.open(bench->config->raid_path + to_string(sst_count%8) + "/SSTable_"+to_string(old_big)+"-"+to_string(sst_count), ios::out|ios::binary|ios::trunc);
+
+        SSTable_of.write((char *)(bench->h_keys[offset] + total_index), sizeof(__uint128_t)*bench->h_CTF_capacity[offset][sst_count]);
+        SSTable_of.flush();
+        SSTable_of.close();
+
     }
-    //but, the last sst may not be full
-    for(int i = 0; i < bench->config->CTF_count; i++ ){
-        void *status;
-        pthread_join(threads[i], &status);
-    }
+//    pthread_t threads[bench->config->CTF_count];        //may be larger than config->num_threads
+//    for(sst_count=0; sst_count<bench->config->CTF_count; sst_count++){
+//        bench->ctbs[old_big].first_widpid[sst_count] = bench->h_keys[offset][total_index] >> (OID_BIT + MBR_BIT + DURATION_BIT + END_BIT);
+////        cout<<bench->bg_run[old_big].first_widpid[sst_count]<<endl;
+////        cout<<get_key_wid(bench->h_keys[offset][total_index])<<endl;
+////        cout<<get_key_pid(bench->h_keys[offset][total_index])<<endl<<endl;
+//        total_index += bench->h_CTF_capacity[offset][sst_count];
+//        //assert(total_index<=bench->config->kv_restriction);
+//        string keys_path = bench->config->raid_path +to_string(old_big)+"-"+to_string(sst_count);
+//        int SIZE = sizeof(__uint128_t)*bench->h_CTF_capacity[offset][sst_count];
+//        query_context tctx;
+//        tctx.target[0] = (void *)(bench->h_keys[offset] + total_index);
+//        tctx.target[1] = (void *)keys_path.c_str();
+//        tctx.target[2] = (void *)&SIZE;
+//        pthread_create(&threads[sst_count], NULL, parallel_load, (void *)&tctx);
+//    }
+//    //but, the last sst may not be full
+//    for(int i = 0; i < bench->config->CTF_count; i++ ){
+//        void *status;
+//        pthread_join(threads[i], &status);
+//    }
     bench->pro.bg_flush_time += get_time_elapsed(bg_start,true);
 
     fprintf(stdout,"\tmerge sort:\t%.2f\n",bench->pro.bg_merge_time);
@@ -683,7 +701,7 @@ void *straight_dump(void *arg){
     //cout<<"sst_count :"<<sst_count<<" less than"<<1024<<endl;
 
     bench->ctbs[old_big].print_meta();
-    //logt("merge sort and flush", bg_start);
+    logt("merge sort and flush", bg_start);
     //delete[] bit_points;
     bench->dumping = false;
     return NULL;

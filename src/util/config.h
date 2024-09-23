@@ -50,7 +50,7 @@ public:
     //added
     bool load_data = false;
 
-    uint G_bytes = 2;
+    uint G_bytes = 2;                                   //CTB size
     uint kv_capacity = 134217728 + 1000000;            //134217728 + 1000000
     uint kv_restriction = 134217728;                  //2*1024*1024*1024/16 = 134217728
     uint MemTable_capacity = 2 ;             //5*2 ,and workbench data[100] is not enough

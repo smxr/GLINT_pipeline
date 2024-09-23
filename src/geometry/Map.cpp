@@ -97,7 +97,8 @@ Map::Map(string path){
 
 Map::~Map(){
     for(Street *s:streets){
-        delete s;
+        if(s)                   //but why
+            delete s;
     }
     for(Node *p:nodes){
         delete p;

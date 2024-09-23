@@ -24,7 +24,7 @@ workbench * load_meta(const char *path) {
         string CTB_path = string(path) + "CTB" + to_string(i);
         bench->load_CTB_meta(CTB_path.c_str(), i);
     }
-    logt("bench meta %d load from %s",start_time, bench_path.c_str());
+    logt("bench meta load from %s",start_time, bench_path.c_str());
     return bench;
 }
 

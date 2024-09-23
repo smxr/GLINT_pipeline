@@ -581,6 +581,18 @@ uint search_keys_by_pid(__uint128_t* keys, uint64_t wp, uint capacity, vector<__
 //    return NULL;
 //}
 
+void *parallel_load(void *arg){
+    query_context *ctx = (query_context *)arg;
+    ofstream SSTable_of;
+    SSTable_of.open((char *)ctx->target[1] , ios::out|ios::binary|ios::trunc);
+    __uint128_t * keys = (__uint128_t *)ctx->target[0];
+    //print_128(keys[0]);
+    SSTable_of.write((char *)keys, *(int *)ctx->target[2]);
+    SSTable_of.flush();
+    SSTable_of.close();
+    return NULL;
+}
+
 void *straight_dump(void *arg){
     cout<<"step into the sst_dump"<<endl;
     workbench *bench = (workbench *)arg;
@@ -639,29 +651,31 @@ void *straight_dump(void *arg){
 //        bench->bg_run[old_big].bitmap_mbrs[i].print();
 //    }
 
-    ofstream SSTable_of;
-    __uint128_t * keys = new __uint128_t[bench->config->kv_restriction / bench->config->split_num];         //over size
     uint total_index = 0;
     uint sst_count = 0;
     struct timeval bg_start = get_cur_time();
+    pthread_t threads[bench->config->CTF_count];        //may be larger than config->num_threads
     for(sst_count=0; sst_count<bench->config->CTF_count; sst_count++){
         bench->ctbs[old_big].first_widpid[sst_count] = bench->h_keys[offset][total_index] >> (OID_BIT + MBR_BIT + DURATION_BIT + END_BIT);
 //        cout<<bench->bg_run[old_big].first_widpid[sst_count]<<endl;
 //        cout<<get_key_wid(bench->h_keys[offset][total_index])<<endl;
 //        cout<<get_key_pid(bench->h_keys[offset][total_index])<<endl<<endl;
-        copy(bench->h_keys[offset] + total_index, bench->h_keys[offset] + total_index + bench->h_CTF_capacity[offset][sst_count], keys);
         total_index += bench->h_CTF_capacity[offset][sst_count];
         //assert(total_index<=bench->config->kv_restriction);
-        bench->pro.bg_merge_time += get_time_elapsed(bg_start,true);
-        cout << bench->config->raid_path + to_string(sst_count%8) + "/SSTable_"+to_string(old_big)+"-"+to_string(sst_count) << endl;
-        SSTable_of.open(bench->config->raid_path + to_string(sst_count%8) + "/SSTable_"+to_string(old_big)+"-"+to_string(sst_count), ios::out|ios::binary|ios::trunc);
-        bench->pro.bg_open_time += get_time_elapsed(bg_start,true);
-        SSTable_of.write((char *)keys, sizeof(__uint128_t)*bench->h_CTF_capacity[offset][sst_count]);
-        SSTable_of.flush();
-        SSTable_of.close();
-        bench->pro.bg_flush_time += get_time_elapsed(bg_start,true);
+        string keys_path = bench->config->raid_path +to_string(old_big)+"-"+to_string(sst_count);
+        int SIZE = sizeof(__uint128_t)*bench->h_CTF_capacity[offset][sst_count];
+        query_context tctx;
+        tctx.target[0] = (void *)(bench->h_keys[offset] + total_index);
+        tctx.target[1] = (void *)keys_path.c_str();
+        tctx.target[2] = (void *)&SIZE;
+        pthread_create(&threads[sst_count], NULL, parallel_load, (void *)&tctx);
     }
     //but, the last sst may not be full
+    for(int i = 0; i < bench->config->CTF_count; i++ ){
+        void *status;
+        pthread_join(threads[i], &status);
+    }
+    bench->pro.bg_flush_time += get_time_elapsed(bg_start,true);
 
     fprintf(stdout,"\tmerge sort:\t%.2f\n",bench->pro.bg_merge_time);
     fprintf(stdout,"\tflush:\t%.2f\n",bench->pro.bg_flush_time);
@@ -671,7 +685,6 @@ void *straight_dump(void *arg){
     bench->ctbs[old_big].print_meta();
     //logt("merge sort and flush", bg_start);
     //delete[] bit_points;
-    delete[] keys;
     bench->dumping = false;
     return NULL;
 }

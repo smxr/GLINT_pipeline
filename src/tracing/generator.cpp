@@ -213,24 +213,6 @@ Point trace_generator::get_random_location(int seed){
     }
     double xval = tweets[tid].x + (0.5-get_rand_double())*100*degree_per_meter_longitude(tweets[tid].y);                //100
     double yval = tweets[tid].y + (0.5-get_rand_double())*100*degree_per_meter_latitude;
-    //maybe not in the map mbr
-//    box map_mbr = map->getMBR();
-//    if(xval < map_mbr.low[0]){
-//        double offset = map_mbr.low[0] - xval;
-//        xval = map_mbr.low[0] + offset;
-//    }
-//    if(xval > map_mbr.high[0]){
-//        double offset = xval - map_mbr.high[0];
-//        xval = map_mbr.high[0] - offset;
-//    }
-//    if(yval < map_mbr.low[1]){
-//        double offset = map_mbr.low[1] - yval;
-//        yval = map_mbr.low[1] + offset;
-//    }
-//    if(yval > map_mbr.high[1]){
-//        double offset = yval - map_mbr.high[1];
-//        yval = map_mbr.high[1] - offset;
-//    }
     return Point(xval, yval);
 }
 
@@ -292,16 +274,6 @@ void trace_generator::fill_trace(Point * ret, Map *mymap, int obj){             
             }else {
                 meta_data[obj].type = REST;
             }
-//            if(tryluck(config->drive_rate)){
-//                meta_data[obj].type = DRIVE;
-//                rested = false;
-//            }else if(tryluck(config->walk_rate)){
-//                meta_data[obj].type = WALK;
-//                rested = false;
-//            }else if(!rested){
-//                meta_data[obj].type = REST;
-//                rested = true;
-//            }
         }
         if(meta_data[obj].type == DRIVE){
             if(meta_data[obj].trajectory.empty()){                      //new trip
@@ -319,8 +291,6 @@ void trace_generator::fill_trace(Point * ret, Map *mymap, int obj){             
                 meta_data[obj].time_remaining = (get_ave_walk_time() - 10) * 2 * get_rand_double() + 5;
             }
             const double step = config->walk_speed/meta_data[obj].end.distance(meta_data[obj].loc, true);
-//            uint pause_timestamp = 10 * get_rand_double();
-//            uint pause_length = 10 * get_rand_double();
             double portion;
             for(portion = step;portion<(1+step) && count<config->cur_duration && meta_data[obj].time_remaining > 0;){
                 ret[count*config->num_objects+obj].x = meta_data[obj].loc.x+portion*(meta_data[obj].end.x - meta_data[obj].loc.x);
@@ -328,14 +298,6 @@ void trace_generator::fill_trace(Point * ret, Map *mymap, int obj){             
                 count++;
                 meta_data[obj].time_remaining--;
                 portion += step;
-//                if(count == pause_timestamp * 10 + 1 && get_rand_double() > 0.4){
-//                    for(uint i = 0; i < pause_length && count<config->cur_duration; i++){
-//                        ret[count*config->num_objects+obj].x = ret[(count-1)*config->num_objects+obj].x;
-//                        ret[count*config->num_objects+obj].y = ret[(count-1)*config->num_objects+obj].y;
-//                        count++;
-//                        meta_data[obj].time_remaining--;
-//                    }
-//                }
             }
             meta_data[obj].loc = ret[(count-1)*config->num_objects+obj];
             if(!meta_data[obj].time_remaining || portion > 1){

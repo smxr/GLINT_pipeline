@@ -72,12 +72,12 @@ public:
     uint oversize_buffer_capacity = 1342177;
 
     char CTB_meta_path[24] = "../data/meta/";
-    char raid_path[24] = "/data3/ssd";
+    char raid_path[24] = "/mnt/raid5/SSTable_";
 
     void update(){
         cout << "into update" << endl;
         assert(MemTable_capacity%2==0);
-        kv_restriction = G_bytes * 67108864;            //67108864 = 1G
+        kv_restriction = G_bytes * 671088;            //67108864 = 1G
         kv_capacity = kv_restriction + 1000000;
         oversize_buffer_capacity = kv_restriction / 100;
         split_num = sqrt(CTF_count);

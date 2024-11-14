@@ -6,8 +6,8 @@ SRCS := $(wildcard */*.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(SRCS))
 
 INCLUDES	= -I /usr/include -I ./src -I /usr/local/cuda/targets/x86_64-linux/include/
-LIBS		= -L/usr/lib/x86_64-linux-gnu -lboost_program_options -lpthread -fopenmp -pg
-CPPFLAGS	= -g -std=c++17 -Wno-cpp -fopenmp
+LIBS		= -L/usr/lib/x86_64-linux-gnu -lboost_program_options -lpthread -fopenmp -pg -ljemalloc
+CPPFLAGS	= -g -std=c++17 -Wno-cpp -fopenmp -O2 -DUSE_JEMALLOC
 
 CUDALIBS	= -L/usr/local/cuda/lib64 -lcudart
 
@@ -22,11 +22,11 @@ CU_SRCS := $(wildcard cuda/*.cu)
 CU_OBJS := $(patsubst %.cu,%_cu.o,$(CU_SRCS))
 
 
-ifdef USE_GPU
+# ifdef USE_GPU
 	CPPFLAGS += -DUSE_GPU
 	LIBS  += ${CUDALIBS}
 	GEOMETRY_OBJS += ${CU_OBJS}
-endif
+# endif
 
 %_cu.o: %.cu
 	$(NVCC) -c -g -std=c++17 -arch=sm_60 -DCUB_IGNORE_DEPRECATED_CPP_DIALECT --extended-lambda $(INCLUDES) -o $@ $<

@@ -11,9 +11,11 @@
 #include "../util/config.h"
 #include "../util/query_context.h"
 #include "../geometry/geometry.h"
+#include "../util/ThreadPool.h"
 #include "../index/QTree.h"
 #include "step_merge.h"
 #include "../cuda/cuda_util.cuh"
+#include <future>
 #include <unordered_set>
 
 typedef struct profiler{
@@ -337,6 +339,7 @@ public:
     //bool mbr_search_in_CTB(box b, uint CTB_id, unordered_set<uint> &uni, time_query * tq);
 
     void load_CTF_keys(uint CTB_id, uint CTF_id);
+    std::future<void> load_CTF_keys_async(uint CTB_id, uint CTF_id);
     void load_big_sorted_run(uint b);
     void clear_all_keys();
     //box parse_to_real_mbr(unsigned short first_low, unsigned short first_high, uint64_t value);
@@ -356,6 +359,9 @@ extern workbench * load_meta(const char *path);
 class new_bench : public workbench{
 public:
     vector<box_search_info> box_search_queue;
+    vector<future<void>> futures;
+
+    ThreadPool& pool = ThreadPool::getInstance();
     atomic<long long> search_count;
     //vector<id_search_info> id_search_queue;
     CTB * compacted_ctbs = nullptr;

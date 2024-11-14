@@ -150,7 +150,7 @@ uint get_key_target(__uint128_t key){
 }
 
 __host__ __device__
-uint64_t get_key_mbr_code(__uint128_t key){
+uint64_t get_key_mbr_code(__uint128_t& key){
     return (uint64_t)((key >> ( DURATION_BIT + END_BIT)) & ((1ULL << MBR_BIT) - 1));
 }
 

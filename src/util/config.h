@@ -19,7 +19,7 @@ public:
     uint num_threads = 1;
     uint duration = 1000;
     uint num_objects = 1000;
-    string trace_path = "../data/points/";              //"/gisdata/chicago/traces"      // "../data/points/"
+    string trace_path = "/data2/xiang/glint_new_pipeline/data/points/";              //"/gisdata/chicago/traces"      // "../data/points/"
     uint cur_duration = 0;
 
     uint file_size = 3600;                             // data in x seconds is put into file
@@ -206,8 +206,8 @@ public:
     uint max_rest_time = 600;
     //uint max_walk_time = 100;
 
-    string map_path = "../data/streets.map";
-    string meta_path = "../data/chicago.mt";
+    string map_path = "/data2/xiang/glint_new_pipeline/data/streets.map";
+    string meta_path = "/data2/xiang/glint_new_pipeline/data/chicago.mt";
 
     void print(){
         fprintf(stderr, "generator configuration:\n");

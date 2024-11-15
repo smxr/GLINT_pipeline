@@ -5,6 +5,8 @@
 #include <fcntl.h>    // open, O_RDONLY
 #include <unistd.h>   // close
 #include "../util/ThreadPool.h"
+#include <sys/shm.h>
+#include <sys/wait.h>
 
 using namespace std;
 
@@ -550,6 +552,13 @@ void query_search_box(workbench *bench)
     //    p.close();
 }
 
+// new_bench* create_shared_bench(int shmid, size_t size) {
+//     void* shared_memory = shmat(shmid, nullptr, 0);
+//     new_bench* bench = new (shared_memory) new_bench();
+//     // 初始化Bench对象，例如填充box_search_queue
+//     return bench;
+// }
+
 void experiment_box_openmp(new_bench *bench)
 {
     bench->box_search_queue.reserve(bench->ctb_count * bench->config->CTF_count / 20);
@@ -569,6 +578,7 @@ void experiment_box_openmp(new_bench *bench)
         bench->intersect_sst_count = 0;
         bench->bit_find_count = 0;
         double edge_length = 0.01;
+
         Point mid;
         mid.x = -87.9 + 0.2;
         mid.y = 41.6 + 0.2;
@@ -585,18 +595,29 @@ void experiment_box_openmp(new_bench *bench)
         // {
         //     fut.get();
         // }
-
+        struct timeval bg_start = get_cur_time();
+        // #pragma omp parallel for num_threads(128)
+        //         for (int j = 0; j < bench->box_search_queue.size(); j++)
+        //         {
+        //             auto &info = bench->box_search_queue[j];
+        //             if (bench->ctbs[info.ctb_id].ctfs[info.ctf_id].keys != nullptr)
+        //             {
+        //                 bench->load_CTF_keys(info.ctb_id, info.ctf_id);
+        //             }
+        //         }
+        double load_time = get_time_elapsed(bg_start, true);
+        fprintf(stdout, "\tload_time:\t%.2f\n", load_time);
 // #pragma omp parallel for num_threads(bench->config->num_threads)
-#pragma omp parallel for num_threads(128) //schedule(dynamic)
+#pragma omp parallel for num_threads(128) // schedule(dynamic)
         for (int j = 0; j < bench->box_search_queue.size(); j++)
         {
             auto &info = bench->box_search_queue[j];
             uint mbr_find_count = 0;
-
             if (!bench->ctbs[info.ctb_id].ctfs[info.ctf_id].keys)
             {
                 bench->load_CTF_keys(info.ctb_id, info.ctf_id);
             }
+
             // bench->futures[j].get();
             for (uint q = 0; q < bench->ctbs[info.ctb_id].CTF_capacity[info.ctf_id]; q++)
             {
@@ -619,7 +640,8 @@ void experiment_box_openmp(new_bench *bench)
             bench->ctbs[info.ctb_id].ctfs[info.ctf_id].keys = nullptr;
             bench->search_count.fetch_add(mbr_find_count, std::memory_order_relaxed);
         }
-
+        double calculate_time = get_time_elapsed(bg_start, true);
+        fprintf(stdout, "\tsearch_time:\t%.2f\n", calculate_time);
         double multi_thread_consume = get_time_elapsed(multi_thread_start, true);
         q << edge_length * edge_length << ',' << bench->search_count << ',' << multi_thread_consume << ','
           << bench->intersect_sst_count << ',' << bench->bit_find_count << ',' << prepare_consume << endl;

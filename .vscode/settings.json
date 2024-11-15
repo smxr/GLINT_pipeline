@@ -71,6 +71,7 @@
         "list": "cpp",
         "typeindex": "cpp",
         "format": "cpp",
-        "__nullptr": "cpp"
+        "__nullptr": "cpp",
+        "*.ipp": "cpp"
     }
 }

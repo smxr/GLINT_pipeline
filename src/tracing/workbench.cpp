@@ -407,17 +407,35 @@ bool workbench::search_memtable(uint64_t pid, vector<__uint128_t> &v_keys, vecto
     return ret;
 }
 
-void workbench::load_CTF_keys(uint CTB_id, uint CTF_id)
-{
-    ifstream read_sst;
-    string filename = config->raid_path + to_string(CTF_id % 8) + "/SSTable_" + to_string(CTB_id) + "-" + to_string(CTF_id);
-    read_sst.open(filename, ios::in | ios::binary);
+// void workbench::load_CTF_keys(uint CTB_id, uint CTF_id)
+// {
+//     ifstream read_sst;
+//     string filename = config->raid_path + to_string(CTF_id % 8) + "/SSTable_" + to_string(CTB_id) + "-" + to_string(CTF_id);
+//     read_sst.open(filename, ios::in | ios::binary);
+//     // int buffer_size = 2 * 1024 * 1024;
+//     // read_sst.rdbuf()->pubsetbuf(new char[buffer_size], buffer_size);
+//     assert(read_sst.is_open());
+//     ctbs[CTB_id].ctfs[CTF_id].keys = new __uint128_t[ctbs[CTB_id].CTF_capacity[CTF_id]];
+//     read_sst.read((char *)ctbs[CTB_id].ctfs[CTF_id].keys, sizeof(__uint128_t) * ctbs[CTB_id].CTF_capacity[CTF_id]);
+//     read_sst.close();
+// }
+
+void workbench::load_CTF_keys(uint CTB_id, uint CTF_id) {
+    std::string filename = config->raid_path + std::to_string(CTF_id % 8) + "/SSTable_" + std::to_string(CTB_id) + "-" + std::to_string(CTF_id);
+    FILE* file = fopen(filename.c_str(), "rb");  // 使用 "rb" 模式以二进制读取方式打开文件
+    assert(file != nullptr);
+
+    // 禁用与 std::ifstream 不同的 libc 缓冲区
     // int buffer_size = 2 * 1024 * 1024;
-    // read_sst.rdbuf()->pubsetbuf(new char[buffer_size], buffer_size);
-    assert(read_sst.is_open());
+    // setvbuf(file, new char[buffer_size], _IOFBF, buffer_size);
+
+    size_t keys_size = sizeof(__uint128_t) * ctbs[CTB_id].CTF_capacity[CTF_id];
     ctbs[CTB_id].ctfs[CTF_id].keys = new __uint128_t[ctbs[CTB_id].CTF_capacity[CTF_id]];
-    read_sst.read((char *)ctbs[CTB_id].ctfs[CTF_id].keys, sizeof(__uint128_t) * ctbs[CTB_id].CTF_capacity[CTF_id]);
-    read_sst.close();
+    
+    size_t read_count = fread((char *)ctbs[CTB_id].ctfs[CTF_id].keys, 1, keys_size, file);
+    assert(read_count == keys_size);
+
+    fclose(file);
 }
 
 std::future<void> workbench::load_CTF_keys_async(uint CTB_id, uint CTF_id)

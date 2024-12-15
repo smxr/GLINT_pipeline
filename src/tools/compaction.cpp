@@ -154,6 +154,9 @@ void *a_parallel_dump(void *arg)
 }
 
 vector<pair<vector<__uint128_t>, vector<box>>> objects_map;
+vector<vector<__uint128_t>> keys_with_wid(100);
+vector<vector<box>> mbrs_with_wid(100);
+vector<vector<uint>> invert_index(100);
 bool inited = false;
 
 void *merge_dump(new_bench *bench, uint start_ctb, uint merge_ctb_count)
@@ -165,6 +168,13 @@ void *merge_dump(new_bench *bench, uint start_ctb, uint merge_ctb_count)
             objects_map[i].first.clear();
             objects_map[i].second.clear();
         }
+        for (size_t i = 0; i < 100; i++)
+        {
+            keys_with_wid[i].clear();
+            mbrs_with_wid[i].clear();
+            invert_index[i].clear();
+        }
+
         // objects_map.clear();
         objects_map.resize(bench->config->num_objects);
     }
@@ -186,9 +196,6 @@ void *merge_dump(new_bench *bench, uint start_ctb, uint merge_ctb_count)
     cout << "sst_capacity:" << bench->config->kv_capacity << endl;
     bench->merge_kv_capacity = bench->config->kv_restriction * merge_ctb_count;
 
-    vector<vector<__uint128_t>> keys_with_wid(bench->config->CTF_count);
-    vector<vector<box>> mbrs_with_wid(bench->config->CTF_count);
-    vector<vector<uint>> invert_index(bench->config->CTF_count);
     if (!inited)
     {
         objects_map.resize(bench->config->num_objects);
@@ -197,9 +204,12 @@ void *merge_dump(new_bench *bench, uint start_ctb, uint merge_ctb_count)
 
     // 提前计算出所需要的大小
     int prealloc_size = 0;
-    for (int j = 0; j < bench->config->CTF_count; j++)
+    if (!inited)
     {
-        invert_index[j].reserve(bench->ctbs[start_ctb].CTF_capacity[j]);
+        for (int j = 0; j < bench->config->CTF_count; j++)
+        {
+            invert_index[j].reserve(bench->ctbs[start_ctb].CTF_capacity[j]);
+        }
     }
     double init_time = get_time_elapsed(bg_start, true);
     fprintf(stdout, "\tinit_time:\t%.2f\n", init_time);
@@ -227,7 +237,6 @@ void *merge_dump(new_bench *bench, uint start_ctb, uint merge_ctb_count)
     }
     if (!inited)
     {
-        inited = true;
         for (int i = 0; i < objects_map.size(); i++)
         {
             objects_map[i].first.reserve(oid2cnt[i]);
@@ -286,8 +295,11 @@ void *merge_dump(new_bench *bench, uint start_ctb, uint merge_ctb_count)
         }
         // 压缩后的大小
         bench->compacted_ctbs[c_ctb_id].CTF_capacity[j] = v_capacity;
-        keys_with_wid[j].reserve(v_capacity);
-        mbrs_with_wid[j].reserve(v_capacity);
+        if (!inited)
+        {
+            keys_with_wid[j].reserve(v_capacity);
+            mbrs_with_wid[j].reserve(v_capacity);
+        }
         for (int k = 0; k < invert_index[j].size(); k++)
         {
             copy(objects_map[invert_index[j][k]].first.begin(), objects_map[invert_index[j][k]].first.end(),
@@ -495,6 +507,8 @@ void *merge_dump(new_bench *bench, uint start_ctb, uint merge_ctb_count)
 
     double func_time = get_time_elapsed(bg_start1, true);
     fprintf(stdout, "\tfunc_time:\t%.2f\n", func_time);
+
+    inited = true;
     return NULL;
 }
 

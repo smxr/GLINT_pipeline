@@ -60,8 +60,8 @@ public:
 		start = counter;
 		counter += max((size_t)1, num_units/num_batchs);
 		end = counter;
-		if(end>num_units){
 			end = num_units;
+		if(end>num_units){
 		}
 		//log("%d %d %d %d",start,next_report,num_objects,report_gap);
 		if(report_gap<100&&end>=next_report&&start<num_units){

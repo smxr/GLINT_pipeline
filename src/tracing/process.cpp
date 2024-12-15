@@ -839,7 +839,7 @@ void tracer::process(){
                          << bench->search_multi_list[i].low0 << "-" << bench->search_multi_list[i].low1 << "-"
                          << bench->search_multi_list[i].high0 << "-" << bench->search_multi_list[i].high1 << endl;
                 }
-
+202400130197
                 //search memtable
 //                struct timeval newstart = get_cur_time();
 //                for(int i=0;i<bench->search_multi_length;i++){
@@ -964,8 +964,6 @@ void tracer::process(){
 ////                    }
 //                }
 //                p.close();
-
-
 //                if(config->MemTable_capacity==2){
 //                    straight_dump((void *)bench);
 //                }

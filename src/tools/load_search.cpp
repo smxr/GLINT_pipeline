@@ -596,19 +596,10 @@ void experiment_box_openmp(new_bench *bench)
         //     fut.get();
         // }
         struct timeval bg_start = get_cur_time();
-        // #pragma omp parallel for num_threads(128)
-        //         for (int j = 0; j < bench->box_search_queue.size(); j++)
-        //         {
-        //             auto &info = bench->box_search_queue[j];
-        //             if (bench->ctbs[info.ctb_id].ctfs[info.ctf_id].keys != nullptr)
-        //             {
-        //                 bench->load_CTF_keys(info.ctb_id, info.ctf_id);
-        //             }
-        //         }
         double load_time = get_time_elapsed(bg_start, true);
         fprintf(stdout, "\tload_time:\t%.2f\n", load_time);
 // #pragma omp parallel for num_threads(bench->config->num_threads)
-#pragma omp parallel for num_threads(128) // schedule(dynamic)
+#pragma omp parallel for num_threads(128) //schedule(dynamic)
         for (int j = 0; j < bench->box_search_queue.size(); j++)
         {
             auto &info = bench->box_search_queue[j];

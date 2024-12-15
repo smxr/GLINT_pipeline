@@ -36,7 +36,7 @@ int main(int argc, char **argv){
         config.cur_duration = min((config.start_time+config.duration-i),(uint)100);
         cout << "config.cur_duration : "<< config.cur_duration <<endl;
         gen->generate_trace(traces);
-        dumpTo(&config, i, traces);
+        // dumpTo(&config, i, traces);
     }
 
     delete []traces;

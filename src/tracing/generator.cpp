@@ -384,6 +384,27 @@ void *gentrace_unit(void *arg){
     return NULL;
 }
 
+// void trace_generator::generate_trace(Point * traces){
+//     srand (time(NULL));
+//     struct timeval start = get_cur_time();
+//     pthread_t threads[config->num_threads];
+//     query_context tctx;
+//     tctx.config = config;
+//     tctx.target[0] = (void *)this;
+//     tctx.target[1] = (void *)traces;
+//     tctx.num_units = config->num_objects;
+//     tctx.report_gap = 1;
+//     tctx.num_batchs = 100000;
+//     for(int i=0;i<config->num_threads;i++){
+//         pthread_create(&threads[i], NULL, gentrace_unit, (void *)&tctx);
+//     }
+//     for(int i = 0; i < config->num_threads; i++ ){
+//         void *status;
+//         pthread_join(threads[i], &status);
+//     }
+//     logt("generate traces",start);
+// }
+
 void trace_generator::generate_trace(Point * traces){
     srand (time(NULL));
     struct timeval start = get_cur_time();
@@ -395,12 +416,19 @@ void trace_generator::generate_trace(Point * traces){
     tctx.num_units = config->num_objects;
     tctx.report_gap = 1;
     tctx.num_batchs = 100000;
-    for(int i=0;i<config->num_threads;i++){
-        pthread_create(&threads[i], NULL, gentrace_unit, (void *)&tctx);
-    }
-    for(int i = 0; i < config->num_threads; i++ ){
-        void *status;
-        pthread_join(threads[i], &status);
+    // for(int i=0;i<config->num_threads;i++){
+    //     pthread_create(&threads[i], NULL, gentrace_unit, (void *)&tctx);
+    // }
+#pragma omp parallel for num_threads(128)
+    for(int i = 0; i < config->num_objects / 100000; i++ ){
+        trace_generator *gen = this;
+        Point *result = traces;
+        Map *mymap = gen->map->clone();
+        for (int j = 0; j < 100000; j++)
+        {
+            gen->fill_trace(result, mymap, i);
+        }
+        delete mymap;
     }
     logt("generate traces",start);
 }

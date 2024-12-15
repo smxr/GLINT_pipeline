@@ -72,6 +72,9 @@
         "typeindex": "cpp",
         "format": "cpp",
         "__nullptr": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "csignal": "cpp",
+        "future": "cpp",
+        "shared_mutex": "cpp"
     }
 }

@@ -420,23 +420,90 @@ bool workbench::search_memtable(uint64_t pid, vector<__uint128_t> &v_keys, vecto
 //     read_sst.close();
 // }
 
-void workbench::load_CTF_keys(uint CTB_id, uint CTF_id) {
+// void workbench::load_CTF_keys(uint CTB_id, uint CTF_id) {
+//     std::string filename = config->raid_path + std::to_string(CTF_id % 8) + "/SSTable_" + std::to_string(CTB_id) + "-" + std::to_string(CTF_id);
+//     FILE* file = fopen(filename.c_str(), "rb");  // 使用 "rb" 模式以二进制读取方式打开文件
+//     assert(file != nullptr);
+//     // 禁用与 std::ifstream 不同的 libc 缓冲区
+//     // int buffer_size = 2 * 1024 * 1024;
+//     // setvbuf(file, new char[buffer_size], _IOFBF, buffer_size);
+//     size_t keys_size = sizeof(__uint128_t) * ctbs[CTB_id].CTF_capacity[CTF_id];
+//     ctbs[CTB_id].ctfs[CTF_id].keys = new __uint128_t[ctbs[CTB_id].CTF_capacity[CTF_id]];
+//     size_t read_count = fread((char *)ctbs[CTB_id].ctfs[CTF_id].keys, 1, keys_size, file);
+//     assert(read_count == keys_size);
+//     fclose(file);
+// }
+
+void workbench::load_CTF_keys(uint CTB_id, uint CTF_id)
+{
     std::string filename = config->raid_path + std::to_string(CTF_id % 8) + "/SSTable_" + std::to_string(CTB_id) + "-" + std::to_string(CTF_id);
-    FILE* file = fopen(filename.c_str(), "rb");  // 使用 "rb" 模式以二进制读取方式打开文件
-    assert(file != nullptr);
-
-    // 禁用与 std::ifstream 不同的 libc 缓冲区
-    // int buffer_size = 2 * 1024 * 1024;
-    // setvbuf(file, new char[buffer_size], _IOFBF, buffer_size);
-
+    int fd = open(filename.c_str(), O_RDONLY | O_DIRECT);
+    assert(fd != -1);
     size_t keys_size = sizeof(__uint128_t) * ctbs[CTB_id].CTF_capacity[CTF_id];
-    ctbs[CTB_id].ctfs[CTF_id].keys = new __uint128_t[ctbs[CTB_id].CTF_capacity[CTF_id]];
-    
-    size_t read_count = fread((char *)ctbs[CTB_id].ctfs[CTF_id].keys, 1, keys_size, file);
-    assert(read_count == keys_size);
+    // ctbs[CTB_id].ctfs[CTF_id].keys = new __uint128_t[ctbs[CTB_id].CTF_capacity[CTF_id]];
+    void *aligned_buffer = nullptr;
+    const size_t block_size = 512;
+    aligned_buffer = aligned_alloc(block_size, keys_size);
+    ctbs[CTB_id].ctfs[CTF_id].keys = (__uint128_t *)aligned_buffer;
+    // assert(aligned_buffer != nullptr);
+    if (keys_size % 512 == 0)
+    {
+        read(fd, aligned_buffer, keys_size);
+    }
+    else
+    {
+        read(fd, aligned_buffer, keys_size / 512 * 512);
+        ctbs[CTB_id].CTF_capacity[CTF_id] = keys_size / 512 * 512 / sizeof(__uint128_t);
+        // close(fd);
+        // fd = open(filename.c_str(), O_RDONLY);
+        // if (lseek(fd, keys_size / 512 * 512, SEEK_SET) != (off_t)-1)
+        // {
+        //     read(fd, aligned_buffer + keys_size / 512 * 512, keys_size - keys_size / 512 * 512);
+        // }
+    }
+    close(fd);
 
-    fclose(file);
+    // assert(read_count == static_cast<ssize_t>(keys_size));
+    // if (aligned_buffer != ctbs[CTB_id].ctfs[CTF_id].keys) {
+    //     memcpy(ctbs[CTB_id].ctfs[CTF_id].keys, aligned_buffer, keys_size);
+    //     free(aligned_buffer);
+    // }
 }
+
+// void workbench::load_CTF_keys(uint CTB_id, uint CTF_id)
+// {
+//     int fd;
+//     std::string filename = config->raid_path + std::to_string(CTF_id % 8) + "/SSTable_" + std::to_string(CTB_id) + "-" + std::to_string(CTF_id);
+//     // 使用O_DIRECT标志打开文件
+//     if ((fd = open(filename.c_str(), O_RDONLY | O_DIRECT)) == -1) {
+//         perror("Error opening file for direct I/O");
+//         exit(EXIT_FAILURE);
+//     }
+//     size_t key_count = ctbs[CTB_id].CTF_capacity[CTF_id];
+//     size_t total_size = sizeof(__uint128_t) * key_count;
+//     // 确保缓冲区是物理页对齐的
+//     void* buffer = aligned_alloc(512, total_size);  // 假设512字节对齐足够；根据实际情况调整
+//     if (buffer == nullptr) {
+//         perror("Failed to allocate aligned memory");
+//         close(fd);
+//         // exit(EXIT_FAILURE);
+//     }
+//     // 读取整个文件到缓冲区
+//     ssize_t bytesRead = read(fd, buffer, total_size);
+//     if (bytesRead != (ssize_t)total_size) {
+//         perror("Error reading from file with direct I/O");
+//         free(buffer);
+//         close(fd);
+//         exit(EXIT_FAILURE);
+//     }
+//     // 将读入的数据复制到ctfs结构中
+//     __uint128_t* keys = new __uint128_t[key_count];
+//     memcpy(keys, buffer, total_size);
+//     ctbs[CTB_id].ctfs[CTF_id].keys = keys;
+//     // 清理
+//     free(buffer);
+//     close(fd);
+// }
 
 std::future<void> workbench::load_CTF_keys_async(uint CTB_id, uint CTF_id)
 {
@@ -465,12 +532,10 @@ std::future<void> workbench::load_CTF_keys_async(uint CTB_id, uint CTF_id)
 //     ifstream read_sst;
 //     string filename = config->raid_path + to_string(CTF_id % 8) + "/SSTable_" + to_string(CTB_id) + "-" + to_string(CTF_id);
 //     read_sst.open(filename, ios::in | ios::binary);
-
 //     int fd = open(filename.c_str(), O_RDONLY);
 //     __uint128_t *data = (__uint128_t *)mmap(NULL, ctbs[CTB_id].CTF_capacity[CTF_id] * sizeof(__uint128_t), PROT_READ, MAP_PRIVATE, fd, 0);
 //     close(fd);
 //     ctbs[CTB_id].ctfs[CTF_id].keys = data;
-
 //     // assert(read_sst.is_open());
 //     // ctbs[CTB_id].ctfs[CTF_id].keys = new __uint128_t[ctbs[CTB_id].CTF_capacity[CTF_id]];
 //     // read_sst.read((char *)ctbs[CTB_id].ctfs[CTF_id].keys, sizeof(__uint128_t) * ctbs[CTB_id].CTF_capacity[CTF_id]);

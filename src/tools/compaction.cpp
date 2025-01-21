@@ -260,14 +260,14 @@ void * merge_dump(workbench * bench, uint start_ctb, uint merge_ctb_count, vecto
     for(uint i = 0; i < bench->config->CTF_count; i++){
         C_ctb.ctfs[i].bitmap = new uint8_t[C_ctb.ctfs[i].ctf_bitmap_size];
         f_box * CTF_mbr = &C_ctb.ctfs[i].ctf_mbr;
-        for(int j = 0; j < C_ctb.ctfs[i].CTF_kv_capacity; j++) {
+        for(int j = 0; j < C_ctb.ctfs[i].CTF_kv_capacity; j+=10) {
             uint low0 = (mbrs_with_sid[i][j].low[0] - CTF_mbr->low[0])/(CTF_mbr->high[0] - CTF_mbr->low[0]) * C_ctb.ctfs[i].x_grid;
             uint low1 = (mbrs_with_sid[i][j].low[1] - CTF_mbr->low[1])/(CTF_mbr->high[1] - CTF_mbr->low[1]) * C_ctb.ctfs[i].y_grid;
             uint high0 = (mbrs_with_sid[i][j].high[0] - CTF_mbr->low[0])/(CTF_mbr->high[0] - CTF_mbr->low[0]) * C_ctb.ctfs[i].x_grid;
             uint high1 = (mbrs_with_sid[i][j].high[1] - CTF_mbr->low[1])/(CTF_mbr->high[1] - CTF_mbr->low[1]) * C_ctb.ctfs[i].y_grid;
             uint bit_pos = 0;
-            for (uint m = low0; m <= high0; m++) {
-                for (uint n = low1; n <= high1; n++) {
+            for (uint m = low0; m <= high0 && m < C_ctb.ctfs[i].x_grid; m++) {
+                for (uint n = low1; n <= high1 && n < C_ctb.ctfs[i].y_grid; n++) {
                     bit_pos = m + n * C_ctb.ctfs[i].x_grid;
                     C_ctb.ctfs[i].bitmap[bit_pos / 8] |= (1 << (bit_pos % 8));
                 }
@@ -310,7 +310,7 @@ void * merge_dump(workbench * bench, uint start_ctb, uint merge_ctb_count, vecto
 //        }
 //        delete[] bit_points;
 
-
+#pragma omp parallel for num_threads(bench->config->CTF_count)
     for(uint i = 0; i < bench->config->CTF_count; i++) {
         CTF * ctf = &C_ctb.ctfs[i];
         uint key_Bytes = ctf->key_bit / 8;
@@ -376,6 +376,7 @@ void * merge_dump(workbench * bench, uint start_ctb, uint merge_ctb_count, vecto
     double merged_buffer_bitmap = get_time_elapsed(bg_start,true);
     fprintf(stdout,"\tmerged_buffer_bitmap:\t%.2f\n",merged_buffer_bitmap);
 
+    cout << "merged_buffer.oversize_kv_count " << merged_buffer.oversize_kv_count << endl;
     merged_buffer.keys = new __uint128_t[merged_buffer.oversize_kv_count];
     merged_buffer.boxes = new f_box[merged_buffer.oversize_kv_count];
     uint *key_index = new uint[o_count];        //0
@@ -420,7 +421,7 @@ int main(int argc, char **argv){
     clear_cache();
     string path = "../data/meta/";
     //workbench * bench = C_load_meta(path.c_str());
-    uint max_ctb = 2;
+    uint max_ctb = 5;
     workbench * bench = load_meta(path.c_str(), max_ctb);
     cout << "bench->ctb_count " << bench->ctb_count << endl;
     cout << "max_ctb " << max_ctb << endl;
@@ -440,8 +441,8 @@ int main(int argc, char **argv){
     }
     vector< pair< vector<key_info>, vector<f_box> > > objects_map(bench->config->num_objects);
 
-    uint merge_ctb_count = 2;
-    for(uint i = 0; i < 20; i += merge_ctb_count){
+    uint merge_ctb_count = 5;
+    for(uint i = 0; i < 5; i += merge_ctb_count){
         for(uint j = i; j < i + merge_ctb_count; j++){
             for(uint k = 0; k < bench->config->CTF_count; k++){
                 bench->load_CTF_keys(j, k);

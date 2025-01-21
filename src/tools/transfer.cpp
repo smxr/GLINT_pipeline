@@ -24,6 +24,7 @@ old_workbench * old_load_meta(const char *path, uint max_ctb) {
     in.read((char *)bench, sizeof(old_workbench));      //bench->config = NULL
     bench->config = config;
     bench->ctbs = new CTB[config->big_sorted_run_capacity];
+#pragma omp parallel for num_threads(bench->config->num_threads)
     for(int i = 0; i < min(max_ctb, bench->ctb_count); i++){
         //CTB temp_ctb;
         string CTB_path = string(path) + "CTB" + to_string(i);

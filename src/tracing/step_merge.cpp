@@ -320,7 +320,7 @@ void CTF::transfer_all_in_one(){
         }
 
         __uint128_t temp_key = ((__uint128_t)pid << (id_bit + duration_bit + end_bit + mbr_bit)) + ((__uint128_t)target << (duration_bit + end_bit + mbr_bit))
-                               + ((__uint128_t)duration << (end_bit + mbr_bit)) + ((__uint128_t)end << (mbr_bit)) + value_mbr;
+                               + ((__uint128_t)duration << (end_bit + mbr_bit)) + ((__uint128_t)end << (mbr_bit)) + old_value_mbr;
         memcpy(&shrink_keys[kid * key_bit / 8], &temp_key, key_bit / 8);
 
     }

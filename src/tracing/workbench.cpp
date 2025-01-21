@@ -244,46 +244,46 @@ void *parallel_load(void *arg){
 }
 
 void workbench::load_big_sorted_run(uint b){
-//    if(!ctbs[b].ctfs){
-//        ctbs[b].ctfs = new CTF[config->CTF_count];
-//    }
-//    for(int i = 0; i < config->CTF_count; i++) {
-//        //if(!ctbs[b].ctfs[i].keys){
-//        ctbs[b].ctfs[i].keys = new __uint128_t[ctbs[b].CTF_capacity[i]];
-//    }
-//
-//    struct timeval start_time = get_cur_time();
-//    load_args *pargs = new load_args[config->CTF_count];
-//    pthread_t threads[config->CTF_count];
-//    for(int i = 0; i < config->CTF_count; i++){
-//        threads[i] = 0;
-//    }
-//    for(int i = 0; i < config->CTF_count; i++){
-//        //if(!ctbs[b].ctfs[i].keys){
-//            ctbs[b].ctfs[i].keys = new __uint128_t[ctbs[b].CTF_capacity[i]];
-//            pargs[i].path = config->raid_path + to_string(i % 2) + "/SSTable_" + to_string(b) + "-" + to_string(i);
-//            pargs[i].SIZE = sizeof(__uint128_t) * ctbs[b].CTF_capacity[i];
-//            pargs[i].keys = ctbs[b].ctfs[i].keys;
-//            int ret = pthread_create(&threads[i], NULL, parallel_load, (void *)&pargs[i]);
-//            if(ret != 0) {
-//                std::cerr << "Failed to create thread " << i << " with error code: " << ret << std::endl;
-//                threads[i] = 0;
-//                continue;
-//            }
-//        //}
-//    }
-//    for(int i = 0; i < config->CTF_count; i++ ){
-//        if (threads[i] != 0) {
-//            void *status;
-//            int ret = pthread_join(threads[i], &status);
-//            if (ret != 0) {
-//                std::cerr << "Error joining thread " << i << " with error code: " << ret << std::endl;
-//            }
-//        }
-//    }
-//    pro.load_keys_time += get_time_elapsed(start_time,false);
-//    logt("load CTB keys %d", start_time, b);
-//    delete[] pargs;
+    if(!ctbs[b].ctfs){
+        ctbs[b].ctfs = new CTF[config->CTF_count];
+    }
+    for(int i = 0; i < config->CTF_count; i++) {
+        //if(!ctbs[b].ctfs[i].keys){
+        ctbs[b].ctfs[i].keys = new __uint128_t[ctbs[b].CTF_capacity[i]];
+    }
+
+    struct timeval start_time = get_cur_time();
+    load_args *pargs = new load_args[config->CTF_count];
+    pthread_t threads[config->CTF_count];
+    for(int i = 0; i < config->CTF_count; i++){
+        threads[i] = 0;
+    }
+    for(int i = 0; i < config->CTF_count; i++){
+        //if(!ctbs[b].ctfs[i].keys){
+            ctbs[b].ctfs[i].keys = new __uint128_t[ctbs[b].CTF_capacity[i]];
+            pargs[i].path = config->raid_path + to_string(i % 2) + "/SSTable_" + to_string(b) + "-" + to_string(i);
+            pargs[i].SIZE = sizeof(__uint128_t) * ctbs[b].CTF_capacity[i];
+            pargs[i].keys = ctbs[b].ctfs[i].keys;
+            int ret = pthread_create(&threads[i], NULL, parallel_load, (void *)&pargs[i]);
+            if(ret != 0) {
+                std::cerr << "Failed to create thread " << i << " with error code: " << ret << std::endl;
+                threads[i] = 0;
+                continue;
+            }
+        //}
+    }
+    for(int i = 0; i < config->CTF_count; i++ ){
+        if (threads[i] != 0) {
+            void *status;
+            int ret = pthread_join(threads[i], &status);
+            if (ret != 0) {
+                std::cerr << "Error joining thread " << i << " with error code: " << ret << std::endl;
+            }
+        }
+    }
+    pro.load_keys_time += get_time_elapsed(start_time,false);
+    logt("load CTB keys %d", start_time, b);
+    delete[] pargs;
 }
 
 void workbench::clear_all_keys(){
@@ -662,61 +662,61 @@ void workbench::load_CTF_meta(const char *path, int i, int j) {
 }
 
 void old_workbench::old_load_CTB_meta(const char *path, int i) {
-//    struct timeval start_time = get_cur_time();
-//    ifstream in(path, ios::in | ios::binary);
-//
-//    if (!in.is_open()) {
-//        std::cerr << "Error opening file: " << path << std::endl;
-//    }
-//    in.read((char *)&ctbs[i], sizeof(CTB) - sizeof(oversize_buffer) - 8);
-//    in.read((char *)&ctbs[i].o_buffer, sizeof(old_oversize_buffer));
-//    in.read((char *)&ctbs[i].box_rtree, 8);
-//    ctbs[i].first_widpid = new uint64_t[config->CTF_count];
-//    ctbs[i].sids = new unsigned short[config->num_objects];
-//    ctbs[i].bitmaps = new unsigned char[bitmaps_size];
-//    ctbs[i].bitmap_mbrs = new box[config->CTF_count];
-//    ctbs[i].CTF_capacity = new uint[config->CTF_count];
-//    ctbs[i].o_buffer.keys = new __uint128_t[ctbs[i].o_buffer.oversize_kv_count];
-//    ctbs[i].o_buffer.boxes = new f_box[ctbs[i].o_buffer.oversize_kv_count];
-//    in.read((char *)ctbs[i].first_widpid, config->CTF_count * sizeof(uint64_t));
-//    in.read((char *)ctbs[i].sids, config->num_objects * sizeof(unsigned short));
-//    in.read((char *)ctbs[i].bitmaps, bitmaps_size * sizeof(unsigned char));
-//    in.read((char *)ctbs[i].bitmap_mbrs, config->CTF_count * sizeof(box));
-//    in.read((char *)ctbs[i].CTF_capacity, config->CTF_count * sizeof(uint));
-//    in.read((char *)ctbs[i].o_buffer.keys, ctbs[i].o_buffer.oversize_kv_count * sizeof(__uint128_t));
-//    in.read((char *)ctbs[i].o_buffer.boxes, ctbs[i].o_buffer.oversize_kv_count * sizeof(f_box));
-//    in.close();
-//    //RTree
-//    ctbs[i].box_rtree = new RTree<short *, double, 2, double>();        //size nearly equals to bitmap_mbrs
-//    std::cerr << "Size of ctbs[i].first_widpid: "
-//              << bytes_to_MB(config->CTF_count * sizeof(uint64_t)) << " MB" << std::endl;
-//
-//    std::cerr << "Size of ctbs[i].sids: "
-//              << bytes_to_MB(config->num_objects * sizeof(unsigned short)) << " MB" << std::endl;
-//
-//    std::cerr << "Size of ctbs[i].bitmaps: "
-//              << bytes_to_MB(bitmaps_size * sizeof(unsigned char)) << " MB" << std::endl;
-//
-//    std::cerr << "Size of ctbs[i].bitmap_mbrs: "
-//              << bytes_to_MB(config->CTF_count * sizeof(box)) << " MB" << std::endl;
-//
-//    std::cerr << "Size of ctbs[i].CTF_capacity: "
-//              << bytes_to_MB(config->CTF_count * sizeof(uint)) << " MB" << std::endl;
-//
-//    std::cerr << "Size of ctbs[i].o_buffer.keys: "
-//              << bytes_to_MB(ctbs[i].o_buffer.oversize_kv_count * sizeof(__uint128_t)) << " MB" << std::endl;
-//
-//    std::cerr << "Size of ctbs[i].o_buffer.boxes: "
-//              << bytes_to_MB(ctbs[i].o_buffer.oversize_kv_count * sizeof(f_box)) << " MB" << std::endl;
-//
-//    uint byte_of_CTB_meta = config->CTF_count * sizeof(uint64_t) + config->num_objects * sizeof(unsigned short) + bitmaps_size * sizeof(unsigned char)
-//                            + config->CTF_count * sizeof(box) * 2 + config->CTF_count * sizeof(uint) + ctbs[i].o_buffer.oversize_kv_count * sizeof(__uint128_t)
-//                            + ctbs[i].o_buffer.oversize_kv_count * sizeof(f_box);
-//    cerr << "byte_of_CTB_meta: " << byte_of_CTB_meta << endl;
-//    for(uint j = 0; j < config->CTF_count; ++j){
-//        ctbs[i].box_rtree->Insert(ctbs[i].bitmap_mbrs[j].low, ctbs[i].bitmap_mbrs[j].high, new short(j));
-//    }
-//    logt("CTB meta %d load from %s",start_time, i, path);
+    struct timeval start_time = get_cur_time();
+    ifstream in(path, ios::in | ios::binary);
+
+    if (!in.is_open()) {
+        std::cerr << "Error opening file: " << path << std::endl;
+    }
+    in.read((char *)&ctbs[i], sizeof(CTB) - sizeof(oversize_buffer) - 8);
+    in.read((char *)&ctbs[i].o_buffer, sizeof(old_oversize_buffer));
+    in.read((char *)&ctbs[i].box_rtree, 8);
+    ctbs[i].first_widpid = new uint64_t[config->CTF_count];
+    ctbs[i].sids = new unsigned short[config->num_objects];
+    ctbs[i].bitmaps = new unsigned char[bitmaps_size];
+    ctbs[i].bitmap_mbrs = new box[config->CTF_count];
+    ctbs[i].CTF_capacity = new uint[config->CTF_count];
+    ctbs[i].o_buffer.keys = new __uint128_t[ctbs[i].o_buffer.oversize_kv_count];
+    ctbs[i].o_buffer.boxes = new f_box[ctbs[i].o_buffer.oversize_kv_count];
+    in.read((char *)ctbs[i].first_widpid, config->CTF_count * sizeof(uint64_t));
+    in.read((char *)ctbs[i].sids, config->num_objects * sizeof(unsigned short));
+    in.read((char *)ctbs[i].bitmaps, bitmaps_size * sizeof(unsigned char));
+    in.read((char *)ctbs[i].bitmap_mbrs, config->CTF_count * sizeof(box));
+    in.read((char *)ctbs[i].CTF_capacity, config->CTF_count * sizeof(uint));
+    in.read((char *)ctbs[i].o_buffer.keys, ctbs[i].o_buffer.oversize_kv_count * sizeof(__uint128_t));
+    in.read((char *)ctbs[i].o_buffer.boxes, ctbs[i].o_buffer.oversize_kv_count * sizeof(f_box));
+    in.close();
+    //RTree
+    ctbs[i].box_rtree = new RTree<short *, double, 2, double>();        //size nearly equals to bitmap_mbrs
+    std::cerr << "Size of ctbs[i].first_widpid: "
+              << bytes_to_MB(config->CTF_count * sizeof(uint64_t)) << " MB" << std::endl;
+
+    std::cerr << "Size of ctbs[i].sids: "
+              << bytes_to_MB(config->num_objects * sizeof(unsigned short)) << " MB" << std::endl;
+
+    std::cerr << "Size of ctbs[i].bitmaps: "
+              << bytes_to_MB(bitmaps_size * sizeof(unsigned char)) << " MB" << std::endl;
+
+    std::cerr << "Size of ctbs[i].bitmap_mbrs: "
+              << bytes_to_MB(config->CTF_count * sizeof(box)) << " MB" << std::endl;
+
+    std::cerr << "Size of ctbs[i].CTF_capacity: "
+              << bytes_to_MB(config->CTF_count * sizeof(uint)) << " MB" << std::endl;
+
+    std::cerr << "Size of ctbs[i].o_buffer.keys: "
+              << bytes_to_MB(ctbs[i].o_buffer.oversize_kv_count * sizeof(__uint128_t)) << " MB" << std::endl;
+
+    std::cerr << "Size of ctbs[i].o_buffer.boxes: "
+              << bytes_to_MB(ctbs[i].o_buffer.oversize_kv_count * sizeof(f_box)) << " MB" << std::endl;
+
+    uint byte_of_CTB_meta = config->CTF_count * sizeof(uint64_t) + config->num_objects * sizeof(unsigned short) + bitmaps_size * sizeof(unsigned char)
+                            + config->CTF_count * sizeof(box) * 2 + config->CTF_count * sizeof(uint) + ctbs[i].o_buffer.oversize_kv_count * sizeof(__uint128_t)
+                            + ctbs[i].o_buffer.oversize_kv_count * sizeof(f_box);
+    cerr << "byte_of_CTB_meta: " << byte_of_CTB_meta << endl;
+    for(uint j = 0; j < config->CTF_count; ++j){
+        ctbs[i].box_rtree->Insert(ctbs[i].bitmap_mbrs[j].low, ctbs[i].bitmap_mbrs[j].high, new short(j));
+    }
+    logt("CTB meta %d load from %s",start_time, i, path);
 }
 
 
@@ -764,29 +764,29 @@ void workbench::build_trees(uint max_ctb){
 }
 
 void workbench::make_new_ctf_with_old_ctb(uint max_ctb){
-//    for(uint i = 0; i < max_ctb; i++){
-//        load_big_sorted_run(i);
-//#pragma omp parallel for num_threads(config->CTF_count)
-//        for(uint j = 0; j < config->CTF_count; j++){
-//            ctbs[i].ctfs[j].ctf_mbr.get_fb(&ctbs[i].bitmap_mbrs[j]);
-//            //tbs[i].ctfs[j].ctf_mbr.print();
-//            //load keys
-//            //ctbs[i].ctfs[j].bitmap = &ctbs[i].bitmaps[j * (bit_count / 8)];
-//            ctbs[i].ctfs[j].CTF_kv_capacity = ctbs[i].CTF_capacity[j];
-//            ctbs[i].ctfs[j].end_time_min = ctbs[i].end_time_min;
-//            ctbs[i].ctfs[j].end_time_max = ctbs[i].end_time_max;
-//            ctbs[i].ctfs[j].get_ctf_bits(mbr, config);
-//            ctbs[i].ctfs[j].transfer_all_in_one();
-//            string sst_path = config->raid_path + to_string(j%2) + "/N_SSTable_"+to_string(i)+"-"+to_string(j);
-//            ofstream SSTable_of;
-//            SSTable_of.open(sst_path , ios::out|ios::binary|ios::trunc);
-//            assert(SSTable_of.is_open());
-//            SSTable_of.write((char *)ctbs[i].ctfs[j].keys, ctbs[i].ctfs[j].key_bit / 8 * ctbs[i].ctfs[j].CTF_kv_capacity);
-//            SSTable_of.close();
-//            delete[] ctbs[i].ctfs[j].keys;
-//        }
-//        ctbs[i].o_buffer.end_time_min = ctbs[i].end_time_min;
-//        ctbs[i].o_buffer.end_time_max = ctbs[i].end_time_max;
-//        ctbs[i].o_buffer.write_o_buffer(mbr, bit_count);
-//    }
+    for(uint i = 0; i < max_ctb; i++){
+        load_big_sorted_run(i);
+#pragma omp parallel for num_threads(config->CTF_count)
+        for(uint j = 0; j < config->CTF_count; j++){
+            ctbs[i].ctfs[j].ctf_mbr.get_fb(&ctbs[i].bitmap_mbrs[j]);
+            //tbs[i].ctfs[j].ctf_mbr.print();
+            //load keys
+            //ctbs[i].ctfs[j].bitmap = &ctbs[i].bitmaps[j * (bit_count / 8)];
+            ctbs[i].ctfs[j].CTF_kv_capacity = ctbs[i].CTF_capacity[j];
+            ctbs[i].ctfs[j].end_time_min = ctbs[i].end_time_min;
+            ctbs[i].ctfs[j].end_time_max = ctbs[i].end_time_max;
+            ctbs[i].ctfs[j].get_ctf_bits(mbr, config);
+            ctbs[i].ctfs[j].transfer_all_in_one();
+            string sst_path = config->raid_path + to_string(j%2) + "/N_SSTable_"+to_string(i)+"-"+to_string(j);
+            ofstream SSTable_of;
+            SSTable_of.open(sst_path , ios::out|ios::binary|ios::trunc);
+            assert(SSTable_of.is_open());
+            SSTable_of.write((char *)ctbs[i].ctfs[j].keys, ctbs[i].ctfs[j].key_bit / 8 * ctbs[i].ctfs[j].CTF_kv_capacity);
+            SSTable_of.close();
+            delete[] ctbs[i].ctfs[j].keys;
+        }
+        ctbs[i].o_buffer.end_time_min = ctbs[i].end_time_min;
+        ctbs[i].o_buffer.end_time_max = ctbs[i].end_time_max;
+        ctbs[i].o_buffer.write_o_buffer(mbr, bit_count);
+    }
 }
